@@ -1,331 +1,310 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>VR Chemistry Lab · Advanced</title>
-  <!-- A-Frame -->
+  <title>Sci-Fi Cyber Chemistry Lab Pro</title>
+  <!-- A-Frame and Extras for movement -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- extras for realistic lighting & shadows -->
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background: #0a0f1a; font-family: 'Segoe UI', system-ui, sans-serif; }
-    .info-tip { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-                background: rgba(10, 20, 30, 0.8); backdrop-filter: blur(4px);
-                color: #b0f0ff; padding: 10px 22px; border-radius: 40px;
-                border: 1px solid #2c6a8f; font-size: 14px; letter-spacing: 1px;
-                pointer-events: none; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
-    .info-tip i { color: #88ddff; margin-right: 6px; }
-    @media (max-width: 600px) { .info-tip { font-size: 11px; padding: 6px 14px; bottom: 10px; } }
+    body { margin: 0; overflow: hidden; background: #020610; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .hud-display { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                 background: rgba(2, 8, 20, 0.9); backdrop-filter: blur(12px);
+                 color: #00ffff; padding: 14px 35px; border-radius: 50px;
+                 border: 2px solid #00bcff; font-size: 14px; text-transform: uppercase;
+                 letter-spacing: 2px; pointer-events: none; z-index: 10;
+                 box-shadow: 0 0 30px rgba(0,188,255,0.4); text-align: center;}
   </style>
 </head>
 <body>
 
-  <!-- UI hint -->
-  <div class="info-tip">🧪 <i>Click a chemical → then click the beaker</i> · <span style="color:#ffcc88;">⚡</span> Reset button on table</div>
+  <!-- UI Instructions Overlay -->
+  <div class="hud-display">🕹️ MOVEMENT: WASD / ARROWS · 🧪 CLICK ANY OF THE 18 TEST TUBES TO MIX</div>
 
-  <a-scene background="color:#0b1424" shadow="enabled:true" physics="enabled:false">
+  <a-scene background="color:#020610" shadow="enabled:true; type:pcfsoft">
     
-    <!-- Atmospheric lights -->
-    <a-entity light="type:ambient; intensity:0.6; color:#c8d8ff"></a-entity>
-    <a-entity light="type:directional; intensity:1.4; color:#ffe6cc; castShadow:true" position="2 5 4" target="#table"></a-entity>
-    <a-entity light="type:point; intensity:0.5; color:#4488ff; distance:10" position="-2 3 1"></a-entity>
-    <a-entity light="type:point; intensity:0.4; color:#ff8844; distance:8" position="2 2 -1"></a-entity>
+    <!-- Shared Assets and Styles -->
+    <a-assets>
+      <a-mixin id="lab-table" geometry="primitive: box" material="color: #0f172a; roughness: 0.2; metalness: 0.5" shadow="cast:true; receive:true"></a-mixin>
+      <a-mixin id="test-tube" geometry="primitive: cylinder; radius: 0.04; height: 0.38" material="opacity: 0.85; transparent: true; roughness: 0.1; metalness: 0.1"></a-mixin>
+      <a-mixin id="rack-base" geometry="primitive: box; width: 0.7; height: 0.04; depth: 0.2" material="color: #334155; roughness: 0.5"></a-mixin>
+    </a-assets>
 
-    <!-- Camera with smooth look -->
-    <a-camera position="0 1.7 3.2" look-controls="pointerLockEnabled:false">
-      <a-cursor color="#66ddff" fuse="false" raycaster="far:5; objects:.clickable"></a-cursor>
-    </a-camera>
+    <!-- CINEMATIC LIGHTING SYSTEM -->
+    <a-entity light="type:ambient; intensity:0.4; color:#8baaff"></a-entity>
+    <a-entity light="type:directional; intensity:1.8; color:#ffffff; castShadow:true;" position="5 12 4"></a-entity>
+    <!-- Center Beaker Glow -->
+    <a-entity light="type:point; intensity:1.2; color:#00ffcc; distance:6" position="0 2 -1"></a-entity>
+    <!-- Accent Mood Lights -->
+    <a-entity light="type:point; intensity:0.8; color:#ff0055; distance:5" position="3 2 -2"></a-entity>
+    <a-entity light="type:point; intensity:0.8; color:#aa00ff; distance:5" position="-3 2 -2"></a-entity>
 
-    <!-- Sky gradient -->
-    <a-sky color="#0b1424"></a-sky>
-
-    <!-- Ground with subtle grid -->
-    <a-plane rotation="-90 0 0" width="20" height="20" color="#141e2b" position="0 -0.05 0" receiveShadow="true"></a-plane>
-    <a-gridHelper size="12" divisions="20" position="0 -0.02 -2" color="#3a5a7a" opacity="0.15"></a-gridHelper>
-
-    <!-- Main Lab Table (realistic) -->
-    <a-entity id="table" position="0 0.6 -2.2" rotation="0 0 0">
-      <!-- table top -->
-      <a-box width="3.2" height="0.15" depth="1.6" color="#2d3a4a" roughness="0.4" metalness="0.1" position="0 0.7 0" shadow="receive"></a-box>
-      <!-- legs -->
-      <a-cylinder radius="0.06" height="0.7" color="#4a5a6a" position="-1.4 0.35 0.6"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.7" color="#4a5a6a" position="1.4 0.35 0.6"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.7" color="#4a5a6a" position="-1.4 0.35 -0.6"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.7" color="#4a5a6a" position="1.4 0.35 -0.6"></a-cylinder>
-      <!-- edge glow -->
-      <a-box width="3.0" height="0.02" depth="1.4" color="#5b7a9a" position="0 0.78 0" opacity="0.3"></a-box>
+    <!-- SMOOTH RIG CAMERA CONTROL -->
+    <a-entity id="player-rig" movement-controls="speed: 0.16; fly: false">
+      <a-camera position="0 1.6 3.5" look-controls="pointerLockEnabled: false">
+        <a-cursor color="#00ffff" fuse="false" raycaster="far: 8; objects: .clickable"></a-cursor>
+      </a-camera>
     </a-entity>
 
-    <!-- Monitor / HUD panel -->
-    <a-entity position="-1.1 1.9 -3.0" rotation="0 12 0">
-      <a-box width="1.8" height="0.9" depth="0.06" color="#101a24" roughness="0.3" metalness="0.2" position="0 0 0"></a-box>
-      <a-box width="1.6" height="0.7" depth="0.02" color="#0a121c" position="0 0.05 0.04"></a-box>
-      <!-- screen glow -->
-      <a-plane width="1.5" height="0.65" color="#162a3a" position="0 0.05 0.07" opacity="0.3"></a-plane>
+    <!-- SCI-FI INTERIOR ENVIRONMENT DESIGN -->
+    <a-sky color="#030712"></a-sky>
+    <!-- Glossy Cyber Floor -->
+    <a-plane rotation="-90 0 0" width="50" height="50" color="#0b0f19" roughness="0.2" metalness="0.8" receiveShadow="true"></a-plane>
+    <a-gridHelper size="40" divisions="40" position="0 0.01 0" color="#00bcff" opacity="0.15"></a-gridHelper>
+
+    <!-- Architectural Pillars / High-Tech Lab Structures -->
+    <a-cylinder position="-6 4 -8" radius="0.4" height="8" color="#1e293b" metalness="0.6"></a-cylinder>
+    <a-cylinder position="6 4 -8" radius="0.4" height="8" color="#1e293b" metalness="0.6"></a-cylinder>
+    <a-box position="0 7.8 -8" width="14" height="0.4" depth="2" color="#1e293b"></a-box>
+
+    <!-- ULTRA-WIDE CORE MONITOR SYSTEM -->
+    <a-entity id="main-frame-monitor" position="0 2.4 -3.8" rotation="8 0 0">
+      <a-box width="3.6" height="1.3" depth="0.08" color="#020617" roughness="0.6"></a-box>
+      <a-plane width="3.45" height="1.15" color="#091326" position="0 0 0.05" opacity="0.95"></a-plane>
+      <!-- Neon Border Glow -->
+      <a-box width="3.48" height="1.18" depth="0.02" color="#00bcff" position="0 0 0.04" opacity="0.3"></a-box>
+      
+      <!-- Live Lab Data Panel -->
+      <a-text id="hud-title" value="CORE QUANTUM MATRIX: ONLINE" color="#00ffff" align="center" width="3.2" position="0 0.45 0.06" font="mozillavr"></a-text>
+      <a-text id="hud-temp" value="REACTOR TEMP: 25.0 C" color="#ffaa00" align="left" width="1.8" position="-1.5 0.12 0.06" font="mozillavr"></a-text>
+      <a-text id="hud-ph" value="REAGENT pH: 7.00 (NEUTRAL)" color="#00ff88" align="left" width="1.8" position="-1.5 -0.12 0.06" font="mozillavr"></a-text>
+      <a-text id="hud-status" value="STATUS: REACTION CHAMBER EMPTY" color="#94a3b8" align="center" width="2.4" position="0 -0.42 0.06" font="mozillavr"></a-text>
     </a-entity>
 
-    <!-- Status texts (on monitor) -->
-    <a-text id="status" value="⚡ LAB ACTIVE" color="#66e0ff" align="center" width="2.2" position="-1.1 2.25 -2.88" font="mozillavr" scale="0.8 0.8 0.8"></a-text>
-    <a-text id="temp" value="🌡️ 25 °C" color="#ffcc77" width="1.8" position="-1.65 2.0 -2.88" font="mozillavr" scale="0.6 0.6 0.6" align="left"></a-text>
-    <a-text id="ph" value="🧪 pH 7.0" color="#77dd99" width="1.8" position="-0.5 2.0 -2.88" font="mozillavr" scale="0.6 0.6 0.6" align="left"></a-text>
-    <a-text id="score" value="🏆 0" color="#f0f0f0" align="center" width="2.0" position="-1.1 1.72 -2.88" font="mozillavr" scale="0.7 0.7 0.7"></a-text>
+
+    <!-- ======================================== -->
+    <!-- STATION 1 (RIGHT): ACIDS & BASES (6 TUBES)-->
+    <!-- ======================================== -->
+    <a-entity id="station-right" mixin="lab-table" position="2.4 0.425 -2.0" scale="1.6 0.85 1.2">
+      <a-box width="0.98" height="1.02" depth="0.02" color="#ff0055" position="0 0.51 0" opacity="0.7" rotation="90 0 0"></a-box>
+    </a-entity>
+    <a-text value="STATION 01: ACIDS & ALKALIS" color="#ff0055" align="center" position="2.4 0.95 -1.3" scale="0.4 0.4 0.4" font="mozillavr"></a-text>
     
-    <!-- Assistant message -->
-    <a-text id="assistant" value="🔬 select a compound" color="#b8e2ff" width="3.2" position="-1.2 1.45 -2.6" font="mozillavr" scale="0.5 0.5 0.5" align="center"></a-text>
+    <!-- Tubes Rack 1 -->
+    <a-entity mixin="rack-base" position="2.4 0.87 -1.9"></a-entity>
+    <!-- 6 Test Tubes -->
+    <a-entity class="chemical clickable" id="chem-hcl" position="2.15 1.05 -1.95"><a-entity mixin="test-tube" material="color: #ff1e1e"></a-entity><a-text value="HCl" color="#ff1e1e" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-hno3" position="2.25 1.05 -1.95"><a-entity mixin="test-tube" material="color: #ff5722"></a-entity><a-text value="HNO3" color="#ff5722" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-h2so4" position="2.35 1.05 -1.95"><a-entity mixin="test-tube" material="color: #ff9800"></a-entity><a-text value="H2SO4" color="#ff9800" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-naoh" position="2.45 1.05 -1.95"><a-entity mixin="test-tube" material="color: #00e676"></a-entity><a-text value="NaOH" color="#00e676" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-koh" position="2.55 1.05 -1.95"><a-entity mixin="test-tube" material="color: #00b0ff"></a-entity><a-text value="KOH" color="#00b0ff" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-nh3" position="2.65 1.05 -1.95"><a-entity mixin="test-tube" material="color: #006064"></a-entity><a-text value="NH3" color="#006064" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
 
-    <!-- Chemical bottles (clickable) with realistic look -->
-    <a-entity class="chemical clickable" id="blue" position="-0.9 1.4 -2.2">
-      <a-cylinder radius="0.09" height="0.32" color="#d0e0f0" roughness="0.2" metalness="0.1" opacity="0.7"></a-cylinder>
-      <a-cylinder radius="0.075" height="0.22" color="#0088dd" position="0 -0.02 0" roughness="0.1" metalness="0.2"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.04" color="#aaccdd" position="0 0.16 0" opacity="0.6"></a-cylinder>
-      <a-text value="CuSO₄" color="#b0e0ff" align="center" width="0.4" position="0 -0.22 0" font="mozillavr" scale="0.3 0.3 0.3"></a-text>
+
+    <!-- ======================================== -->
+    <!-- STATION 2 (CENTER): METALS & SOLUTIONS (6 TUBES) -->
+    <!-- ======================================== -->
+    <a-entity id="station-center" mixin="lab-table" position="0 0.425 -1.4" scale="2.0 0.85 1.1">
+      <a-box width="0.98" height="1.02" depth="0.02" color="#00ffcc" position="0 0.51 0" opacity="0.7" rotation="90 0 0"></a-box>
+    </a-entity>
+    
+    <!-- Tubes Rack 2 -->
+    <a-entity mixin="rack-base" position="-0.5 0.87 -1.6"></a-entity>
+    <!-- 6 Test Tubes -->
+    <a-entity class="chemical clickable" id="chem-cuso4" position="-0.75 1.05 -1.6"><a-entity mixin="test-tube" material="color: #2979ff"></a-entity><a-text value="CuSO4" color="#2979ff" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-fecl3" position="-0.65 1.05 -1.6"><a-entity mixin="test-tube" material="color: #ffb300"></a-entity><a-text value="FeCl3" color="#ffb300" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-kscn" position="-0.55 1.05 -1.6"><a-entity mixin="test-tube" material="color: #e91e63"></a-entity><a-text value="KSCN" color="#e91e63" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-agno3" position="-0.45 1.05 -1.6"><a-entity mixin="test-tube" material="color: #cfd8dc"></a-entity><a-text value="AgNO3" color="#cfd8dc" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-ki" position="-0.35 1.05 -1.6"><a-entity mixin="test-tube" material="color: #fff59d"></a-entity><a-text value="KI" color="#fff59d" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-pbno3" position="-0.25 1.05 -1.6"><a-entity mixin="test-tube" material="color: #b0bec5"></a-entity><a-text value="Pb(NO3)2" color="#b0bec5" scale="0.21 0.21 0.21" align="center" position="0 0.25 0"></a-text></a-entity>
+
+
+    <!-- ======================================== -->
+    <!-- STATION 3 (LEFT): HIGH DANGER REAGENTS (6 TUBES) -->
+    <!-- ======================================== -->
+    <a-entity id="station-left" mixin="lab-table" position="-2.4 0.425 -2.0" scale="1.6 0.85 1.2">
+      <a-box width="0.98" height="1.02" depth="0.02" color="#aa00ff" position="0 0.51 0" opacity="0.7" rotation="90 0 0"></a-box>
+    </a-entity>
+    <a-text value="STATION 03: OXIDIZERS & VOLATILES" color="#aa00ff" align="center" position="-2.4 0.95 -1.3" scale="0.4 0.4 0.4" font="mozillavr"></a-text>
+
+    <!-- Tubes Rack 3 -->
+    <a-entity mixin="rack-base" position="-2.4 0.87 -1.9"></a-entity>
+    <!-- 6 Test Tubes -->
+    <a-entity class="chemical clickable" id="chem-kmno4" position="-2.65 1.05 -1.95"><a-entity mixin="test-tube" material="color: #aa00ff"></a-entity><a-text value="KMnO4" color="#aa00ff" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-h2o2" position="-2.55 1.05 -1.95"><a-entity mixin="test-tube" material="color: #eceff1"></a-entity><a-text value="H2O2" color="#eceff1" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-ethanol" position="-2.45 1.05 -1.95"><a-entity mixin="test-tube" material="color: #1de9b6"></a-entity><a-text value="Ethanol" color="#1de9b6" scale="0.25 0.25 0.25" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-k2cr2o7" position="-2.35 1.05 -1.95"><a-entity mixin="test-tube" material="color: #ff6d00"></a-entity><a-text value="K2Cr2O7" color="#ff6d00" scale="0.21 0.21 0.21" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-glycerol" position="-2.25 1.05 -1.95"><a-entity mixin="test-tube" material="color: #a7ffeb"></a-entity><a-text value="Glycerin" color="#a7ffeb" scale="0.23 0.23 0.23" align="center" position="0 0.25 0"></a-text></a-entity>
+    <a-entity class="chemical clickable" id="chem-acetone" position="-2.15 1.05 -1.95"><a-entity mixin="test-tube" material="color: #ff4081"></a-entity><a-text value="Acetone" color="#ff4081" scale="0.23 0.23 0.23" align="center" position="0 0.25 0"></a-text></a-entity>
+
+
+    <!-- THE MAIN REACTION BEAKER CHAMBER -->
+    <a-entity id="main-chamber" position="0 0.88 -0.9">
+      <!-- Outer Glass Beaker -->
+      <a-cylinder radius="0.24" height="0.45" color="#ffffff" opacity="0.12" transparent="true" roughness="0" metalness="0.4"></a-cylinder>
+      <a-torus radius="0.24" radius-tubing="0.015" color="#ffffff" opacity="0.4" position="0 0.225 0" rotation="90 0 0"></a-torus>
+      <!-- Reactive Chemical Liquid Level -->
+      <a-cylinder id="beaker-liquid" radius="0.23" height="0.18" color="#a5f3fc" opacity="0.65" position="0 -0.12 0" transparent="true"></a-cylinder>
     </a-entity>
 
-    <a-entity class="chemical clickable" id="red" position="-0.3 1.4 -2.2">
-      <a-cylinder radius="0.09" height="0.32" color="#d0e0f0" roughness="0.2" metalness="0.1" opacity="0.7"></a-cylinder>
-      <a-cylinder radius="0.075" height="0.22" color="#dd2244" position="0 -0.02 0" roughness="0.1" metalness="0.2"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.04" color="#aaccdd" position="0 0.16 0" opacity="0.6"></a-cylinder>
-      <a-text value="HNO₃" color="#ffa0a0" align="center" width="0.4" position="0 -0.22 0" font="mozillavr" scale="0.3 0.3 0.3"></a-text>
+    <!-- KINETIC PARTICLE FX ENGINES -->
+    <!-- Smoke Vapor (Acids/Bases) -->
+    <a-entity id="smoke-fx" position="0 1.25 -0.9" visible="false">
+      <a-sphere radius="0.06" color="#f1f5f9" opacity="0.7" material="transparent:true"></a-sphere>
+      <a-sphere radius="0.12" color="#e2e8f0" opacity="0.4" position="0 0.15 0" material="transparent:true"></a-sphere>
+    </a-entity>
+    
+    <!-- Volatile Fire Explode Flash (Danger Station 3) -->
+    <a-entity id="fire-fx" position="0 1.25 -0.9" visible="false">
+      <a-cone radius-bottom="0.1" radius-top="0.01" height="0.35" color="#ff3d00" material="transparent:true; opacity:0.95"></a-cone>
+      <a-sphere radius="0.18" color="#ffea00" opacity="0.5" position="0 0.1 0" material="transparent:true"></a-sphere>
     </a-entity>
 
-    <a-entity class="chemical clickable" id="green" position="0.3 1.4 -2.2">
-      <a-cylinder radius="0.09" height="0.32" color="#d0e0f0" roughness="0.2" metalness="0.1" opacity="0.7"></a-cylinder>
-      <a-cylinder radius="0.075" height="0.22" color="#22cc66" position="0 -0.02 0" roughness="0.1" metalness="0.2"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.04" color="#aaccdd" position="0 0.16 0" opacity="0.6"></a-cylinder>
-      <a-text value="NaOH" color="#a0ffb0" align="center" width="0.4" position="0 -0.22 0" font="mozillavr" scale="0.3 0.3 0.3"></a-text>
+
+    <!-- MASTER RESET CYBER TERMINAL -->
+    <a-entity id="flush-terminal" class="clickable" position="0.6 0.9 -0.6" rotation="0 -20 0">
+      <a-box width="0.25" height="0.08" depth="0.16" color="#dc2626" roughness="0.4"></a-box>
+      <a-text value="FLUSH ALL" color="#ffffff" scale="0.25 0.25 0.25" align="center" position="0 0.05 0" rotation="-90 0 0" font="mozillavr"></a-text>
     </a-entity>
-
-    <a-entity class="chemical clickable" id="purple" position="0.9 1.4 -2.2">
-      <a-cylinder radius="0.09" height="0.32" color="#d0e0f0" roughness="0.2" metalness="0.1" opacity="0.7"></a-cylinder>
-      <a-cylinder radius="0.075" height="0.22" color="#9933dd" position="0 -0.02 0" roughness="0.1" metalness="0.2"></a-cylinder>
-      <a-cylinder radius="0.06" height="0.04" color="#aaccdd" position="0 0.16 0" opacity="0.6"></a-cylinder>
-      <a-text value="KMnO₄" color="#d0a0ff" align="center" width="0.4" position="0 -0.22 0" font="mozillavr" scale="0.3 0.3 0.3"></a-text>
-    </a-entity>
-
-    <!-- Beaker (clickable) with realistic glass -->
-    <a-entity id="beaker" class="clickable" position="0.05 1.35 -1.55">
-      <!-- glass body -->
-      <a-cylinder radius="0.22" height="0.45" color="#d8ecff" opacity="0.18" roughness="0.05" metalness="0.0" position="0 0.2 0"></a-cylinder>
-      <a-cylinder radius="0.20" height="0.40" color="#c0dfff" opacity="0.08" position="0 0.2 0"></a-cylinder>
-      <!-- rim -->
-      <a-torus radius="0.22" radius-tubing="0.015" color="#d0ecff" opacity="0.5" position="0 0.43 0" rotation="-90 0 0"></a-torus>
-      <!-- liquid (changes) -->
-      <a-cylinder id="liquid" radius="0.18" height="0.18" color="#88ccff" opacity="0.6" position="0 0.08 0" roughness="0.1" metalness="0.0"></a-cylinder>
-      <!-- bottom -->
-      <a-circle radius="0.18" color="#b0d0f0" opacity="0.2" position="0 0.02 0" rotation="-90 0 0"></a-circle>
-    </a-entity>
-
-    <!-- Smoke effect (particle-like) -->
-    <a-sphere id="smoke" radius="0.08" color="#eeeeff" opacity="0.7" position="0.05 1.75 -1.55" visible="false" material="transparent:true"></a-sphere>
-    <a-sphere id="smoke2" radius="0.06" color="#ddddff" opacity="0.5" position="0.05 1.9 -1.55" visible="false" material="transparent:true"></a-sphere>
-
-    <!-- Fire (cone + glow) -->
-    <a-cone id="fire" radius-bottom="0.10" radius-top="0.02" height="0.28" color="#ff8833" position="0.05 1.75 -1.55" visible="false" material="transparent:true; opacity:0.9"></a-cone>
-    <a-sphere id="fireglow" radius="0.12" color="#ff5500" opacity="0.25" position="0.05 1.7 -1.55" visible="false" material="transparent:true"></a-sphere>
-
-    <!-- Reset Button on table -->
-    <a-entity id="reset" class="clickable" position="0.65 0.82 -1.05">
-      <a-box width="0.5" height="0.15" depth="0.12" color="#cc4455" roughness="0.6" metalness="0.2" position="0 0 0"></a-box>
-      <a-box width="0.35" height="0.04" depth="0.04" color="#ffaabb" position="0 0.1 0"></a-box>
-      <a-text value="⟳ RESET" color="white" align="center" width="0.6" position="0 -0.02 0.08" font="mozillavr" scale="0.25 0.25 0.25"></a-text>
-    </a-entity>
-
-    <!-- decorative mini lights -->
-    <a-entity light="type:point; intensity:0.3; color:#66aaff" position="-1.5 2.0 -2.0"></a-entity>
-    <a-entity light="type:point; intensity:0.2; color:#ffaa66" position="1.5 2.0 -2.0"></a-entity>
 
   </a-scene>
 
   <script>
     (function() {
-      // ---------- DATA ----------
-      const chemicals = {
-        blue: { name: "Copper Sulfate", color: "#33aaff", temp: 42, ph: 5.2, emoji: "🔵" },
-        red: { name: "Nitric Acid", color: "#ee3355", temp: 78, ph: 1.8, emoji: "🔴" },
-        green: { name: "Sodium Hydroxide", color: "#33dd77", temp: 58, ph: 13.0, emoji: "🟢" },
-        purple: { name: "KMnO₄", color: "#aa44ee", temp: 36, ph: 6.8, emoji: "🟣" }
-      };
+      // Dynamic Environmental Matrix
+      let phValue = 7.00;
+      let tempValue = 25.0;
+      let mixingColor = { r: 165, g: 243, b: 252 }; // Safe cyan crystal start
 
-      let selected = null;
-      let score = 0;
+      // Element Access Links
+      const hudTitle = document.getElementById('hud-title');
+      const hudPH = document.getElementById('hud-ph');
+      const hudTemp = document.getElementById('hud-temp');
+      const hudStatus = document.getElementById('hud-status');
+      const beakerLiquid = document.getElementById('beaker-liquid');
+      const smokeFX = document.getElementById('smoke-fx');
+      const fireFX = document.getElementById('fire-fx');
 
-      // DOM refs (AFRAME entities)
-      const statusEl = document.getElementById('status');
-      const tempEl = document.getElementById('temp');
-      const phEl = document.getElementById('ph');
-      const scoreEl = document.getElementById('score');
-      const assistantEl = document.getElementById('assistant');
-      const liquidEl = document.getElementById('liquid');
-      const smokeEl = document.getElementById('smoke');
-      const smoke2El = document.getElementById('smoke2');
-      const fireEl = document.getElementById('fire');
-      const fireglowEl = document.getElementById('fireglow');
+      function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+      }
 
-      // Helper: update UI texts
-      function updateUI(data) {
-        if (data) {
-          tempEl.setAttribute('value', `🌡️ ${data.temp} °C`);
-          phEl.setAttribute('value', `🧪 pH ${data.ph}`);
-          liquidEl.setAttribute('color', data.color);
-          statusEl.setAttribute('value', `⚡ ${data.name} reacted`);
-          assistantEl.setAttribute('value', `✅ ${data.emoji} ${data.name} added`);
-        } else {
-          // reset state
-          tempEl.setAttribute('value', '🌡️ 25 °C');
-          phEl.setAttribute('value', '🧪 pH 7.0');
-          liquidEl.setAttribute('color', '#88ccff');
-          statusEl.setAttribute('value', '⚡ LAB ACTIVE');
-          assistantEl.setAttribute('value', '🔬 select a compound');
+      // FX Trigger Sequence
+      function runFX(mode) {
+        if (mode === 'vapor') {
+          smokeFX.setAttribute('visible', 'true');
+          smokeFX.setAttribute('animation', 'property: scale; from: 0.2 0.2 0.2; to: 2.5 3.5 2.5; dur: 1500; easing: easeOutExpo');
+          setTimeout(() => smokeFX.setAttribute('visible', 'false'), 1500);
+        } else if (mode === 'blast') {
+          fireFX.setAttribute('visible', 'true');
+          fireFX.setAttribute('animation', 'property: scale; from: 1 1 1; to: 1.5 2.5 1.5; dur: 120; easing: easeInOutQuad; loop: 5; dir: alternate');
+          setTimeout(() => {
+            fireFX.setAttribute('visible', 'false');
+            fireFX.removeAttribute('animation');
+          }, 2000);
         }
       }
 
-      // Effects: smoke & fire
-      function triggerEffects(temp) {
-        // Smoke always appears
-        smokeEl.setAttribute('visible', 'true');
-        smoke2El.setAttribute('visible', 'true');
-        // animate smoke upwards
-        smokeEl.setAttribute('animation', `property:position; to:0.05 2.4 -1.55; dur:1500; easing:easeOutQuad`);
-        smoke2El.setAttribute('animation', `property:position; to:0.05 2.6 -1.55; dur:1800; easing:easeOutQuad`);
-        // fade out
-        setTimeout(() => {
-          smokeEl.setAttribute('visible', 'false');
-          smoke2El.setAttribute('visible', 'false');
-          // reset positions
-          smokeEl.setAttribute('position', '0.05 1.75 -1.55');
-          smoke2El.setAttribute('position', '0.05 1.85 -1.55');
-        }, 1900);
+      // 18-Chemical Universal Core Processor
+      document.querySelectorAll('.chemical').forEach(chem => {
+        chem.addEventListener('click', (e) => {
+          const targetID = e.currentTarget.id;
+          hudStatus.setAttribute('value', `ANALYZING INTRODUCED ELEMENT: ${targetID.replace('chem-', '').toUpperCase()}`);
+          
+          // Kinetic Click Flight Feedback
+          e.currentTarget.setAttribute('animation', 'property: position; y: 1.25; dur: 200; dir: alternate; loop: 1');
 
-        // Fire if temp > 60
-        if (temp > 60) {
-          fireEl.setAttribute('visible', 'true');
-          fireglowEl.setAttribute('visible', 'true');
-          // flicker animation
-          fireEl.setAttribute('animation', `property:scale; to:1.1 1.3 1.1; dur:200; easing:easeInOutQuad; loop:true`);
-          fireglowEl.setAttribute('animation', `property:scale; to:1.4 1.4 1.4; dur:300; easing:easeInOutQuad; loop:true`);
-          setTimeout(() => {
-            fireEl.setAttribute('visible', 'false');
-            fireglowEl.setAttribute('visible', 'false');
-            fireEl.removeAttribute('animation');
-            fireglowEl.removeAttribute('animation');
-            fireEl.setAttribute('scale', '1 1 1');
-            fireglowEl.setAttribute('scale', '1 1 1');
-          }, 2800);
-        }
-      }
+          // Deep Chemical Logic Arrays
+          switch(targetID) {
+            // Station 1: Acids & Alkalis
+            case 'chem-hcl':
+              phValue = Math.max(0.2, phValue - 3.2); tempValue += 18.5;
+              mixingColor = { r: 239, g: 68, b: 68 }; runFX('vapor');
+              break;
+            case 'chem-hno3':
+              phValue = Math.max(0.5, phValue - 2.8); tempValue += 24.0;
+              mixingColor = { r: 249, g: 115, b: 22 }; runFX('vapor');
+              break;
+            case 'chem-h2so4':
+              phValue = Math.max(0.1, phValue - 4.0); tempValue += 42.5; // High exothermic
+              mixingColor = { r: 234, g: 179, b: 8 }; runFX('vapor');
+              break;
+            case 'chem-naoh':
+              phValue = Math.min(14.0, phValue + 3.5); tempValue += 19.0;
+              mixingColor = { r: 34, g: 197, b: 94 }; runFX('vapor');
+              break;
+            case 'chem-koh':
+              phValue = Math.min(13.8, phValue + 3.1); tempValue += 16.0;
+              mixingColor = { r: 59, g: 130, b: 246 }; runFX('vapor');
+              break;
+            case 'chem-nh3':
+              phValue = Math.min(11.5, phValue + 1.8); tempValue += 5.0;
+              mixingColor = { r: 13, g: 148, b: 136 };
+              break;
 
-      // ---------- CLICK HANDLERS ----------
-      // Chemical click
-      document.querySelectorAll('.chemical').forEach(item => {
-        item.addEventListener('click', (evt) => {
-          evt.stopPropagation();
-          const id = item.id;
-          if (!chemicals[id]) return;
-          selected = id;
-          const data = chemicals[id];
-          assistantEl.setAttribute('value', `🧪 ${data.emoji} ${data.name} selected · click beaker`);
-          // highlight effect: scale up
-          item.setAttribute('animation', `property:scale; to:1.15 1.15 1.15; dur:100; easing:easeOutQuad`);
-          setTimeout(() => {
-            item.setAttribute('animation', `property:scale; to:1 1 1; dur:150; easing:easeOutQuad`);
-          }, 200);
+            // Station 2: Complex Metals & Indicators
+            case 'chem-cuso4':
+              mixingColor = { r: 29, g: 78, b: 216 }; tempValue += 1.5;
+              break;
+            case 'chem-fecl3':
+              mixingColor = { r: 180, g: 83, b: 9 }; tempValue += 4.0;
+              break;
+            case 'chem-kscn':
+              // Blood Red coordination complex simulation if Fe is present
+              mixingColor = { r: 153, g: 27, b: 27 }; tempValue += 2.0;
+              break;
+            case 'chem-agno3':
+              mixingColor = { r: 203, g: 213, b: 225 }; tempValue += 3.0;
+              break;
+            case 'chem-ki':
+              mixingColor = { r: 253, g: 224, b: 71 }; tempValue += 1.0;
+              break;
+            case 'chem-pbno3':
+              mixingColor = { r: 148, g: 163, b: 184 }; tempValue += 2.5;
+              break;
+
+            // Station 3: Dangerous Oxidizers & Volatiles
+            case 'chem-kmno4':
+              phValue = Math.max(4.0, phValue - 0.4); tempValue += 35.0;
+              mixingColor = { r: 168, g: 85, b: 247 }; runFX('blast');
+              break;
+            case 'chem-h2o2':
+              tempValue += 28.0; mixingColor = { r: 248, g: 250, b: 252 };
+              runFX('vapor'); break;
+            case 'chem-ethanol':
+              tempValue += 6.0; mixingColor = { r: 45, g: 212, b: 191 };
+              break;
+            case 'chem-k2cr2o7':
+              phValue = Math.max(3.5, phValue - 0.6); tempValue += 15.0;
+              mixingColor = { r: 2ea, g: 88, b: 12 }; runFX('blast');
+              break;
+            case 'chem-glycerol':
+              tempValue += 12.0; mixingColor = { r: 20, g: 184, b: 166 };
+              break;
+            case 'chem-acetone':
+              tempValue += 8.5; mixingColor = { r: 244, g: 63, b: 94 };
+              runFX('blast'); break;
+          }
+
+          // Render Live Calculations to HUD Screen
+          hudPH.setAttribute('value', `REAGENT pH: ${phValue.toFixed(2)}`);
+          hudTemp.setAttribute('value', `REACTOR TEMP: ${tempValue.toFixed(1)} C`);
+          beakerLiquid.setAttribute('color', rgbToHex(mixingColor.r, mixingColor.g, mixingColor.b));
+          beakerLiquid.setAttribute('opacity', 0.88); // Make fluid richer
+
+          // Critical Temp Trigger Over 85C
+          if (tempValue >= 85.0) {
+            hudTitle.setAttribute('value', '⚠️ CRITICAL STATE: SYSTEM OVERHEATING!');
+            hudTitle.setAttribute('color', '#ef4444');
+          }
         });
       });
 
-      // Beaker click
-      document.getElementById('beaker').addEventListener('click', (evt) => {
-        evt.stopPropagation();
-        if (!selected) {
-          assistantEl.setAttribute('value', '⚠️ first select a chemical!');
-          setTimeout(() => {
-            assistantEl.setAttribute('value', '🔬 select a compound');
-          }, 1200);
-          return;
-        }
-
-        const data = chemicals[selected];
-        if (!data) return;
-
-        // increase score
-        score += 10;
-        scoreEl.setAttribute('value', `🏆 ${score}`);
-
-        // update beaker liquid and monitor
-        updateUI(data);
-
-        // trigger effects (smoke + possibly fire)
-        triggerEffects(data.temp);
-
-        // extra feedback: assistant
-        assistantEl.setAttribute('value', `🔥 ${data.emoji} ${data.name} · reaction!`);
-
-        // small animation on beaker
-        const beaker = document.getElementById('beaker');
-        beaker.setAttribute('animation', `property:rotation; to:0 0 4; dur:50; easing:easeOutQuad`);
-        setTimeout(() => {
-          beaker.setAttribute('animation', `property:rotation; to:0 0 -2; dur:60; easing:easeOutQuad`);
-          setTimeout(() => {
-            beaker.setAttribute('animation', `property:rotation; to:0 0 0; dur:80; easing:easeOutQuad`);
-          }, 70);
-        }, 60);
-
-        // clear selected after reaction? keep it for multiple uses
-        // selected stays, so user can add same again, but we keep it.
-        // but we also want to allow selecting another.
-        // we just keep selected as is.
+      // Emergency Flush Engine
+      document.getElementById('flush-terminal').addEventListener('click', () => {
+        phValue = 7.00; tempValue = 25.0;
+        mixingColor = { r: 165, g: 243, b: 252 };
+        
+        hudPH.setAttribute('value', 'REAGENT pH: 7.00 (NEUTRAL)');
+        hudTemp.setAttribute('value', 'REACTOR TEMP: 25.0 C');
+        hudTitle.setAttribute('value', 'CORE QUANTUM MATRIX: ONLINE');
+        hudTitle.setAttribute('color', '#00ffff');
+        hudStatus.setAttribute('value', 'CHAMBER FLUSH SUCCESSFUL. WATER RESTORED.');
+        beakerLiquid.setAttribute('color', '#a5f3fc');
+        beakerLiquid.setAttribute('opacity', 0.65);
       });
 
-      // Reset button
-      document.getElementById('reset').addEventListener('click', (evt) => {
-        evt.stopPropagation();
-        selected = null;
-        score = 0;
-        scoreEl.setAttribute('value', '🏆 0');
-        updateUI(null);
-        assistantEl.setAttribute('value', '🔄 reset · select chemical');
-        // reset effects
-        fireEl.setAttribute('visible', 'false');
-        fireglowEl.setAttribute('visible', 'false');
-        smokeEl.setAttribute('visible', 'false');
-        smoke2El.setAttribute('visible', 'false');
-        fireEl.removeAttribute('animation');
-        fireglowEl.removeAttribute('animation');
-        fireEl.setAttribute('scale', '1 1 1');
-        fireglowEl.setAttribute('scale', '1 1 1');
-        // liquid color reset
-        liquidEl.setAttribute('color', '#88ccff');
-        // temp/ph reset
-        tempEl.setAttribute('value', '🌡️ 25 °C');
-        phEl.setAttribute('value', '🧪 pH 7.0');
-        statusEl.setAttribute('value', '⚡ LAB ACTIVE');
-        // small animation
-        const resetBtn = document.getElementById('reset');
-        resetBtn.setAttribute('animation', `property:scale; to:0.9 0.9 0.9; dur:80; easing:easeOutQuad`);
-        setTimeout(() => {
-          resetBtn.setAttribute('animation', `property:scale; to:1 1 1; dur:100; easing:easeOutQuad`);
-        }, 100);
-      });
-
-      // additional: click on empty space to clear selection? but we keep it friendly
-      document.querySelector('a-scene').addEventListener('click', (evt) => {
-        // if click on background or non-interactive, just clear assistant hint after a while?
-        // but we don't want to interfere with clicks on objects.
-        // we ignore.
-      });
-
-      // extra: hover effect for clickable (cursor)
-      document.querySelectorAll('.clickable').forEach(el => {
-        el.addEventListener('mouseenter', () => {
-          el.setAttribute('scale', '1.03 1.03 1.03');
-        });
-        el.addEventListener('mouseleave', () => {
-          el.setAttribute('scale', '1 1 1');
-        });
-      });
-
-      console.log('🧪 Advanced VR Chemistry Lab loaded!');
     })();
   </script>
 </body>
